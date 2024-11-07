@@ -15,46 +15,26 @@ def load_listing_results(html_file):
     # print(f"soup is {soup}")    
     
     # init listings list
-    # find all div tags with datatestid=listing-card-title
-    # append all the text of all of those to listings -- those are the names of the listings
+    # make search and pattern to search through all divs with re
     listings = []
-    divs = soup.find_all('div', {"data-testid" : "listing-card-title"})
+    id_search = re.compile("title_(\d+)")
+    id_pattern = r"title_(\d+)"
+    divs = soup.find_all('div', id=id_search)
+    # print(f"divs is {divs}")
+    
+    # iterate through all divs
+        # id is equal to match group 1 of searching the str(div) with the pattern
+        # name is equal to the text of the div
+        # append both as a tuple
     for div in divs:
-        listing = div.text
-        listings.append(listing)
+        # print(f"div is {div}")
+        id = re.search(id_pattern, str(div)).group(1)
+        name = div.text
+        listings.append((name, id))
     # print(f"listings is {listings}")
     # print(f"length of listings is {len(listings)}")
-
-    # init all_ids list and urls list
-    # find all links
-    # append all links to urls
-    all_ids = []
-    urls = []
-    links = soup.find_all('a', href=True)
-    for link in links:
-        url = link.get('href')
-        urls.append(url)
-        # print(f"url is {url}")
-    
-    # make id re pattern
-    # go through each url and only append to ids list if it matches 
-    id_pattern = r"/rooms/(?:plus/)?(\d+)"
-    for url in urls:
-        id_match = re.findall(id_pattern, url)
-        
-        if id_match:
-            all_ids.extend(id_match)
-    # print(f"ids is {all_ids}")
-    # print(f"length of all_ids is {len(all_ids)}")
-    
-    # remove id dupes
-    # make list of tuples
-    ids = list(set(all_ids))
-    # print(f"length of ids without duplicates is {len(ids)}")
-    tups = list(zip(listings, ids))    
-    # print(f"\ntups is {tups}")
-    # print(f"length of tups is {len(tups)}")
-    return tups
+    # print(f"type of listings is {type(listings)}\n\n--------")
+    return listings
     pass
 
 
