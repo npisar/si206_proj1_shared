@@ -2,9 +2,20 @@ from bs4 import BeautifulSoup
 import re
 import os
 import csv
+import requests
 import unittest
 
-# function 1
+# IMPORTANT NOTE:
+"""
+If you are getting "encoding errors" while trying to open, read, or write from a file, add the following argument to any of your open() functions:
+    encoding="utf-8-sig"
+
+An example of that within the function would be:
+    open("filename", "r", encoding="utf-8-sig")
+
+There are a few special characters present from Airbnb that aren't defined in standard UTF-8 (which is what Python runs by default). This is beyond the scope of what you have learned so far in this class, so we have provided this for you just in case it happens to you. Good luck!
+"""
+
 def load_listing_results(html_file): 
     """
     INPUT: A string containing the path of the html file
@@ -17,7 +28,7 @@ def load_listing_results(html_file):
     # init listings list
     # make search and pattern to search through all divs with re
     listings = []
-    id_search = re.compile("title_(\d+)")
+    id_search = re.compile(r"title_(\d+)")
     id_pattern = r"title_(\d+)"
     divs = soup.find_all('div', id=id_search)
     # print(f"divs is {divs}")
@@ -78,7 +89,7 @@ def load_listing_results(html_file):
 
 
 
-# function 2
+
 def get_listing_details(listing_id): 
     """
     INPUT: A string containing the listing id
@@ -267,7 +278,11 @@ def get_listing_details(listing_id):
 
 
 
-# function 3
+
+
+
+
+
 def create_listing_database(html_file): 
     """
     INPUT: A string containing the path of the html file
@@ -290,7 +305,6 @@ def create_listing_database(html_file):
     """
 
     database = []
-    # names and ids list of tuples
     listing_results = load_listing_results(html_file)
     for listing in listing_results:
         id = listing[1]
@@ -343,7 +357,14 @@ def create_listing_database(html_file):
 
 
 
-# function 4
+
+
+
+
+
+
+
+
 def output_csv(data, filename): 
     """
     INPUT: A list of tuples and a string containing the filename
@@ -360,7 +381,7 @@ def output_csv(data, filename):
         writer = csv.writer(file)
 
         # make the header
-        header = ["Listing Title", "Listing ID", "Policy Number", "Host Level", "Host Name(s)", "Place Type", "Review number", "Nightly Rate"]
+        header = ["Listing Title", "Listing ID", "Policy Number", "Host Level", "Host Name(s)", "Place Type", "Review Number", "Nightly Rate"]
         writer.writerow(header)
 
         writer.writerows(sorted_data)
@@ -416,8 +437,6 @@ def output_csv(data, filename):
 
 
 
-
-# function 5
 def validate_policy_numbers(data):
     """
     INPUT: A list of tuples
@@ -443,12 +462,10 @@ def validate_policy_numbers(data):
         lid_search_1 = re.search(policy_pattern_1, policy_number)
         lid_search_2 = re.search(policy_pattern_2, policy_number)
         
-        # if doesn't match both, append info to list
+        # if doesn't match both, append info to list as a tuple
         if not lid_search_1 and not lid_search_2:
             # print(f"incorrect format")
-            incorrect_pns.append(lid)
-            incorrect_pns.append(hostnames)
-            incorrect_pns.append(policy_number)
+            incorrect_pns.append((lid, hostnames, policy_number))
     # print(f"incorrect pns is {incorrect_pns}")
     return incorrect_pns
     pass 
@@ -496,11 +513,6 @@ def validate_policy_numbers(data):
 
 
 
-
-
-
-
-# function 6
 # EXTRA CREDIT 
 def google_scholar_searcher(query): 
     """
@@ -540,4 +552,207 @@ def google_scholar_searcher(query):
     # print(f"titles is {titles}")
     return titles
     pass
-print(google_scholar_searcher("airbnb hotel"))
+# print(google_scholar_searcher("airbnb hotel"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# TODO: Don't forget to write your test cases! 
+class TestCases(unittest.TestCase):
+    def setUp(self):
+        self.listings = load_listing_results("html_files/search_results.html")
+
+
+
+
+
+
+    def test_load_listing_results(self):
+        # print(load_listing_results("html_files/search_results.html"))
+
+        # check that the number of listings extracted is correct (18 listings)
+        self.assertEqual(len(self.listings), 18)
+
+        # check that the variable you saved after calling the function is a list
+        self.assertEqual(type(self.listings), list)
+
+        # check that each item in the list is a tuple
+        for tup in self.listings:
+            self.assertEqual(type(tup), tuple, "item of type != tuple found")
+
+        # check that the first title and listing id tuple is correct (open the search results html and find it)
+        self.assertEqual(self.listings[0][1], '1944564', "first entry incorrect id")
+
+        # check that the last title and listing id tuple is correct (open the search results html and find it)
+        self.assertEqual(self.listings[-1][1], '467507', "last entry incorrect id")
+
+
+
+
+
+    def test_get_listing_details(self):
+        html_list = ["467507",
+                     "1550913",
+                     "1944564",
+                     "4614763",
+                     "6092596"]
+        
+        # call get_listing_details for i in html_list:
+        listing_information = [get_listing_details(id) for id in html_list]
+
+        # check that the number of listing information is correct
+        self.assertEqual(len(listing_information), 5)
+        for info in listing_information:
+            # check that each item in the list is a tuple
+            self.assertEqual(type(info), tuple)
+            # check that each tuple has 6 elements
+            self.assertEqual(len(info), 6)
+            # check that the first four elements in the tuple are strings
+            self.assertEqual(type(info[0]), str)
+            self.assertEqual(type(info[1]), str)
+            self.assertEqual(type(info[2]), str)
+            self.assertEqual(type(info[3]), str)
+            # check that the rest two elements in the tuple are integers
+            self.assertEqual(type(info[4]), int)
+            self.assertEqual(type(info[5]), int)
+
+        # check that the first listing in the html_list has the correct policy number
+        self.assertEqual(listing_information[0][0], "STR-0005349", "incorrect policy number for id 467507")
+
+        # check that the last listing in the html_list has the correct place type
+        self.assertEqual(listing_information[-1][-3], "Entire Room", "incorrect place type for id 6092596")
+
+        # check that the third listing has the correct cost
+        self.assertEqual(listing_information[2][-1], 181, "incorrect cost for id 1944564")
+
+
+
+
+
+
+    def test_create_listing_database(self):
+        # print(create_listing_database("html_files/search_results.html"))
+        detailed_data = create_listing_database("html_files/search_results.html")
+
+        # check that we have the right number of listings (18)
+        self.assertEqual(len(detailed_data), 18)
+
+        for item in detailed_data:
+            # assert each item in the list of listings is a tuple
+            self.assertEqual(type(item), tuple)
+            # check that each tuple has a length of 8
+            self.assertEqual(len(item), 8, "a tuple has incorrect length")
+
+        # check that the first tuple is made up of the following:
+        # ('Loft in Mission District', '1944564', '2022-004088STR', 'Superhost', 'Brian', 'Entire Room', 422, 181)
+        self.assertEqual(detailed_data[0], ('Loft in Mission District', '1944564', '2022-004088STR', 'Superhost', 'Brian', 'Entire Room', 422, 181), "the listing database first tuple does not match")
+        
+        # check that the last tuple is made up of the following:
+        # ('Guest suite in Mission District', '467507', 'STR-0005349', 'Superhost', 'Jennifer', 'Entire Room', 324, 165)
+        self.assertEqual(detailed_data[-1], ('Guest suite in Mission District', '467507', 'STR-0005349', 'Superhost', 'Jennifer', 'Entire Room', 324, 165), "the listing database last tuple does not match")
+
+
+
+
+
+
+    def test_output_csv(self):
+        # call create_listing_database on "html_files/search_results.html"
+        # and save the result to a variable
+        detailed_data = create_listing_database("html_files/search_results.html")
+
+        # call output_csv() on the variable you saved
+        output_csv(detailed_data, "test.csv")
+        # print(output_csv(detailed_data, "test.csv"))
+
+
+        # read in the csv that you wrote
+        csv_lines = []
+        with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'test.csv'), 'r') as f:
+            csv_reader = csv.reader(f)
+            for i in csv_reader:
+                csv_lines.append(i)
+
+        # check that there are 19 lines in the csv
+        self.assertEqual(len(csv_lines), 19)
+
+        # check that the header row is correct
+        # print(f"','.join(csv_lines[0]) is {','.join(csv_lines[0])}")
+        self.assertEqual(",".join(csv_lines[0]), "Listing Title,Listing ID,Policy Number,Host Level,Host Name(s),Place Type,Review Number,Nightly Rate", "header does not match")
+
+        # check that the next row is the correct information about Guest suite in San Francisco
+        self.assertEqual(",".join(csv_lines[1]), "Guest suite in San Francisco,6092596,STR-0000337,Superhost,Marc,Entire Room,713,164", "first data line does not match")
+
+        # check that the row after the above row is the correct infomration about Private room in Mission District
+        self.assertEqual(",".join(csv_lines[2]), "Private room in Mission District,16204265,1081184,Superhost,Koncha,Private Room,520,127", "second data line does not match")
+
+
+
+
+
+
+    def test_validate_policy_numbers(self):
+        # call create_listing_database on "html_files/search_results.html"
+        # and save the result to a variable
+        detailed_data = create_listing_database("html_files/search_results.html")
+
+        # call validate_policy_numbers on the variable created above and save the result as a variable
+        invalid_listings = validate_policy_numbers(detailed_data)
+        # print(invalid_listings)
+
+        # check that the return value is a list
+        self.assertEqual(type(invalid_listings), list)
+
+        # check that the elements in the list are tuples
+        for tup in invalid_listings:
+            self.assertEqual(type(tup), tuple, "an element in the list is not a tuple")
+        # and that there are exactly three element in each tuple
+            self.assertEqual(len(tup), 3, "there's a tuple longer than len 3 in the list")
+
+def main (): 
+    detailed_data = create_listing_database("html_files/search_results.html")
+    output_csv(detailed_data, "airbnb_dataset.csv")
+
+if __name__ == '__main__':
+    # main()
+    unittest.main(verbosity=2)
